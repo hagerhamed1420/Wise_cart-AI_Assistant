@@ -18,9 +18,9 @@ An AI-powered shopping assistant that recommends products from an Amazon dataset
 ### 1. Add your secret
 Go to **Settings → Secrets** in your HuggingFace Space and add:
 
-| Secret name   | Value                  |
-|---------------|------------------------|
-| `GROQ_API_KEY`| Your Groq API key      |
+| Secret name | Value |
+|-------------|-------|
+| GROQ_API_KEY | Your Groq API key |
 
 ### 2. Upload your dataset
 Upload `amazon_product_data.csv` to the **root** of this Space repository.
@@ -29,8 +29,9 @@ Upload `amazon_product_data.csv` to the **root** of this Space repository.
 Push all files and the Space will build automatically.
 
 ## Files
+
 | File | Purpose |
 |------|---------|
-| `app.py` | Main application |
-| `requirements.txt` | Python dependencies |
-| `amazon_product_data.csv` | Product dataset *(you upload this)* |
+| app.py | Main application |
+| requirements.txt | Python dependencies |
+| amazon_product_data.csv | Product dataset (you upload this) |
