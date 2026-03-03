@@ -1,6 +1,7 @@
 import os
 import pandas as pd
 import gradio as gr
+from datasets import load_dataset
 
 from langchain_groq import ChatGroq
 from langchain_huggingface.embeddings import HuggingFaceEmbeddings
@@ -18,8 +19,7 @@ from langchain_community.chat_message_histories import ChatMessageHistory
 
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
 
-
-SAMPLE_SIZE  = 100000
+SAMPLE_SIZE  = 550000
 
 df = pd.read_csv('amazon_products_merged_shuffled.csv', nrows=SAMPLE_SIZE)
 print(df.head())
@@ -42,7 +42,9 @@ embedding_model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-Mi
 faiss_vectorstore = FAISS.from_texts(texts=data, embedding=embedding_model)
 faiss_retriever = faiss_vectorstore.as_retriever()
 
-groq_model = ChatGroq(model="llama-3.1-8b-instant", groq_api_key=GROQ_API_KEY)
+
+groq_model = ChatGroq(model="llama-3.3-70b-versatile", groq_api_key=GROQ_API_KEY)
+
 
 SYSTEM_PROMPT = """
 You are WiseCart AI, a smart, friendly, and helpful shopping assistant.
@@ -67,6 +69,7 @@ Your goal:
 - Keep conversations pleasant and friendly when users send greetings or thanks.
 """
 
+
 store = {}
 
 def get_session_history(session_id: str):
@@ -90,46 +93,64 @@ parser = StrOutputParser()
 def format_docs(docs):
     return "\n\n".join(doc.page_content for doc in docs)
     
-extract_question = RunnableLambda(lambda x: x["question"])
+from langchain_core.runnables import RunnablePassthrough
 
-rag_chain = (
-    {
-        'data' : extract_question | faiss_retriever | format_docs,
-        'question' : extract_question,
-        'history' : RunnableLambda(lambda x: x.get('history', [])),
-    }
-    | prompt
-    | groq_model
-    | parser
-)
+def build_faiss_query(message: str, chat_history) -> str:
+    """Always combine recent chat history + current question for FAISS retrieval."""
+    messages = chat_history.messages
+    if not messages:
+        return message
 
-rag_chain_with_history = RunnableWithMessageHistory(
-    rag_chain,
-    get_session_history,
-    input_messages_key="question",
-    history_messages_key="history",
-)
+    recent = messages[-4:]
+    parts = []
+    for m in recent:
+        role = "User" if m.type == "human" else "Assistant"
+        parts.append(f"{role}: {m.content}")
+    parts.append(f"User: {message}")
+    return "\n".join(parts)
 
 
-def generate_answer(message: str) -> str:
+def generate_answer(message: str, session_id: str) -> str:
     try:
-        response = rag_chain_with_history.invoke(
-            {"question": message},
-            config={"configurable": {"session_id": "user1"}}
+        chat_history = get_session_history(session_id)
+
+        faiss_query = build_faiss_query(message, chat_history)
+        docs = faiss_retriever.invoke(faiss_query)
+        retrieved_data = "\n\n".join(doc.page_content for doc in docs)
+
+        chain = (
+            {
+                'data'    : RunnableLambda(lambda _: retrieved_data),
+                'question': RunnablePassthrough(),
+                'history' : RunnableLambda(lambda _: chat_history.messages),
+            }
+            | prompt
+            | groq_model
+            | parser
         )
-        if isinstance(response, dict):
-            response = response.get("answer") or response.get("output") or str(response)
+
+        response = chain.invoke(message)
+
+        chat_history.add_user_message(message)
+        chat_history.add_ai_message(response)
+
         return response
     except Exception as e:
         return f"⚠️ Something went wrong: {str(e)}"
 
 
-def user_submit(user_message: str, history: list):
+def user_submit(user_message: str, history: list, session_id: str):
     if not user_message.strip():
         return "", history
     history = history + [{"role": "user", "content": user_message}]
-    history = history + [{"role": "assistant", "content": generate_answer(user_message)}]
+    history = history + [{"role": "assistant", "content": generate_answer(user_message, session_id)}]
     return "", history
+
+
+def clear_chat(session_id: str):
+    if session_id in store:
+        del store[session_id]
+    return []
 
 
 APP_NAME = "Wise Cart Assistant"
