@@ -1,37 +1,46 @@
----
-title: Wise Cart Assistant
-emoji: 🛒
-colorFrom: blue
-colorTo: indigo
-sdk: gradio
-sdk_version: 6.6.0
-app_file: app.py
-pinned: false
----
-
 # 🛒 Wise Cart Assistant
 
-An AI-powered shopping assistant that recommends products from an Amazon dataset using RAG (Retrieval-Augmented Generation).
+🔗 [HuggingFace Project Repository](#)  
+🔗 [Amazon Dataset CSV](#)  
+🔗 [Live Gradio Demo](#)
 
-## Setup
+## 👩‍💻 Team Members
+Hager Hamed  
+Ahmed Elshamy  
 
-### 1. Add your secret
-Go to **Settings → Secrets** in your HuggingFace Space and add:
+Under Supervision:  
+Eng. Mohammed Agoor  
+Instructor of Data Science & AI in Digital Egypt Pioneers Initiative  
 
-| Secret name | Value |
-|-------------|-------|
-| GROQ_API_KEY | Your Groq API key |
+## 📝 Project Description
+Wise Cart Assistant is an AI-powered shopping assistant that helps users discover, compare, and choose products based on their needs, budget, and preferences.  
 
-### 2. Upload your dataset
-Upload `amazon_product_data.csv` to the **root** of this Space repository.
+Key features include:  
+- Product recommendations using RAG (Retrieval-Augmented Generation).  
+- Explains why each recommended product fits user requirements.  
+- Provides comparison on price, features, and value.  
+- Suggests reliable places to buy and payment methods.  
+- Friendly and natural conversation handling for casual messages.  
 
-### 3. Deploy
-Push all files and the Space will build automatically.
+This project addresses challenges like:  
+- Handling large datasets of Amazon products efficiently.  
+- Integrating FAISS vector search with embeddings for fast retrieval.  
+- Leveraging LLMs (Groq LLaMA-3.3-70B) for context-aware product suggestions.  
+- Maintaining chat history for consistent user interactions.  
 
-## Files
+## 🛠 Techniques Used
+- Groq LLaMA-3.3-70B model  
+- RAG (Retrieval-Augmented Generation)  
+- FAISS vector database  
+- HuggingFace embeddings (sentence-transformers/all-MiniLM-L6-v2)  
+- Gradio for web UI deployment  
+- Pandas for data handling  
 
-| File | Purpose |
-|------|---------|
-| app.py | Main application |
-| requirements.txt | Python dependencies |
-| amazon_product_data.csv | Product dataset (you upload this) |
+## 🚀 API Overview
+- Retrieve product info from the Amazon dataset.  
+- Generate recommendations and comparisons dynamically.  
+- Maintain friendly chat experience with users.  
+
+## 🔥 Requirements
+```bash
+pip install -r requirements.txt
